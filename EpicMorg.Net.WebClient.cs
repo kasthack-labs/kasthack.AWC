@@ -54,7 +54,6 @@ namespace EpicMorg.Net
             else
                 return new StreamReader(((HttpWebResponse) r.GetResponse()).GetResponseStream()).ReadToEnd();
         }
-        
         public static byte[] DownloadData(string URL)
         {
             return DownloadData(URL, null, null);
