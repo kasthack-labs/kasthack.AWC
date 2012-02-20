@@ -62,9 +62,17 @@ namespace EpicMorg.Net
         {
             return DownloadData(URL, cookies, null);
         }
+        public static byte[] DownloadData(string URL, CookieCollection cookies)
+        {
+            return DownloadData(URL, gcc(cookies), null);
+        }
         public static byte[] DownloadData(string URL, WebHeaderCollection headers)
         {
             return DownloadData(URL, null, headers);
+        }
+        public static byte[] DownloadData(string URL, CookieCollection cookies, WebHeaderCollection headers)
+        {
+            return DownloadData(URL, gcc(cookies), headers);
         }
         public static byte[] DownloadData(string URL,CookieContainer cookies,WebHeaderCollection headers)
         {
@@ -84,6 +92,10 @@ namespace EpicMorg.Net
         {
             DownloadFile(URL, cookies, null, FileName,true);
         }
+        public static void DownloadFile(string URL, CookieCollection cookies, string FileName)
+        {
+            DownloadFile(URL, gcc(cookies), null, FileName, true);
+        }
         public static void DownloadFile(string URL, WebHeaderCollection headers, string FileName)
         {
             DownloadFile(URL, null, headers, FileName,true);
@@ -91,6 +103,14 @@ namespace EpicMorg.Net
         public static void DownloadFile(string URL, CookieContainer cookies, WebHeaderCollection headers,string FileName)
         {
             DownloadFile(URL, cookies, headers, FileName, true);
+        }
+        public static void DownloadFile(string URL, CookieCollection cookies, WebHeaderCollection headers, string FileName)
+        {
+            DownloadFile(URL, gcc(cookies), headers, FileName, true);
+        }
+        public static void DownloadFile(string URL, CookieCollection cookies, WebHeaderCollection headers, string FileName, bool prealloc)
+        {
+            DownloadFile(URL, gcc(cookies), headers, FileName, prealloc);
         }
         public static void DownloadFile(string URL, CookieContainer cookies, WebHeaderCollection headers, string FileName, bool prealloc)
         {
