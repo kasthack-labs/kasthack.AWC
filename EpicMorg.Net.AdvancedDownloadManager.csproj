@@ -41,9 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EpicMorg.Net.DownloadInstanse.cs" />
-    <Compile Include="EpicMorg.Net.LoadSettings.cs" />
-    <Compile Include="EpicMorg.Net.ParallelDownloadManager.cs" />
     <Compile Include="EpicMorg.Net.WebClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

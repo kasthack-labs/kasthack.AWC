@@ -25,6 +25,10 @@ namespace EpicMorg.Net
         {
             return DownloadString(URL, enc, cookies, null);
         }
+        public static string DownloadString(string URL, int enc, CookieContainer cookies)
+        {
+            return DownloadString(URL, Encoding.GetEncoding(enc), cookies, null);
+        }
         public static string DownloadString(string URL, Encoding enc, CookieContainer cookies, WebHeaderCollection headers)
         {
             HttpWebRequest r = (HttpWebRequest) WebRequest.Create(URL);
