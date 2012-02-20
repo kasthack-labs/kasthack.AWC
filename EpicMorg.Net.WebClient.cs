@@ -17,9 +17,17 @@ namespace EpicMorg.Net
         {
             return DownloadString(URL, enc, null, null);
         }
+        public static string DownloadString(string URL, CookieCollection cookies)
+        {
+            return DownloadString(URL, null, gcc(cookies), null);
+        }
         public static string DownloadString(string URL, CookieContainer cookies)
         {
             return DownloadString(URL, null, cookies, null);
+        }
+        public static string DownloadString(string URL, Encoding enc, CookieCollection cookies)
+        {
+            return DownloadString(URL, enc, gcc(cookies), null);
         }
         public static string DownloadString(string URL, Encoding enc, CookieContainer cookies)
         {
@@ -28,6 +36,10 @@ namespace EpicMorg.Net
         public static string DownloadString(string URL, int enc, CookieContainer cookies)
         {
             return DownloadString(URL, Encoding.GetEncoding(enc), cookies, null);
+        }
+        public static string DownloadString(string URL, int enc, CookieCollection cookies)
+        {
+            return DownloadString(URL, Encoding.GetEncoding(enc), gcc(cookies), null);
         }
         public static string DownloadString(string URL, Encoding enc, CookieContainer cookies, WebHeaderCollection headers)
         {
@@ -42,6 +54,7 @@ namespace EpicMorg.Net
             else
                 return new StreamReader(((HttpWebResponse) r.GetResponse()).GetResponseStream()).ReadToEnd();
         }
+        
         public static byte[] DownloadData(string URL)
         {
             return DownloadData(URL, null, null);
@@ -131,6 +144,12 @@ namespace EpicMorg.Net
             }
             read.Close();
             return output;
+        }
+        private static CookieContainer gcc(CookieCollection cookies)
+        {
+            CookieContainer c = new CookieContainer();
+            c.Add(cookies);
+            return c;
         }
         #endregion
     }
