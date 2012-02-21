@@ -154,9 +154,6 @@ namespace EpicMorg.Net
             {
                 ready += count;
                 output = output.Concat(buf.Take(count)).ToArray();
-                #if DEBUG
-                     Thread.Sleep(1000);
-                #endif
             }
             read.Close();
             return output;
