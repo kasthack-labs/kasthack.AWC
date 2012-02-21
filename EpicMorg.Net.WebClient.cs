@@ -56,7 +56,7 @@ namespace EpicMorg.Net
         }
         public static byte[] DownloadData(string URL)
         {
-            return DownloadData(URL, null, null);
+            return DownloadData(URL, (CookieContainer)null, null);
         }
         public static byte[] DownloadData(string URL,CookieContainer cookies)
         {
@@ -68,7 +68,7 @@ namespace EpicMorg.Net
         }
         public static byte[] DownloadData(string URL, WebHeaderCollection headers)
         {
-            return DownloadData(URL, null, headers);
+            return DownloadData(URL, (CookieContainer) null, headers);
         }
         public static byte[] DownloadData(string URL, CookieCollection cookies, WebHeaderCollection headers)
         {
@@ -86,7 +86,7 @@ namespace EpicMorg.Net
         }
         public static void DownloadFile(string URL, string FileName)
         {
-            DownloadFile(URL, null,null, FileName,true);
+            DownloadFile(URL, (CookieContainer) null, null, FileName, true);
         }
         public static void DownloadFile(string URL,CookieContainer cookies, string FileName)
         {
@@ -98,7 +98,7 @@ namespace EpicMorg.Net
         }
         public static void DownloadFile(string URL, WebHeaderCollection headers, string FileName)
         {
-            DownloadFile(URL, null, headers, FileName,true);
+            DownloadFile(URL, (CookieContainer) null, headers, FileName, true);
         }
         public static void DownloadFile(string URL, CookieContainer cookies, WebHeaderCollection headers,string FileName)
         {
@@ -137,9 +137,6 @@ namespace EpicMorg.Net
             {
                 ready += count;
                 write.Write(buf, 0,count);
-                #if DEBUG
-                     Thread.Sleep(1000);
-                #endif
             }
             if (prealloc)
                 write.SetLength(startlength + ready);
