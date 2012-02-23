@@ -8,6 +8,11 @@ namespace EpicMorg.Net
 {
     public static class AdvancedWebClient
     {
+        public enum RequestMethod
+        {
+            GET,
+            POST
+        }
         #region User Functions
         public static string DownloadString(string URL)
         {
@@ -41,14 +46,38 @@ namespace EpicMorg.Net
         {
             return DownloadString(URL, Encoding.GetEncoding(enc), gcc(cookies), null);
         }
-        public static string DownloadString(string URL, Encoding enc, CookieContainer cookies, WebHeaderCollection headers)
+        public static string DownloadString(string URL, Encoding enc, CookieContainer cookies, WebHeaderCollection headers, RequestMethod Method = RequestMethod.GET,string Post=null)
         {
             HttpWebRequest r = (HttpWebRequest) WebRequest.Create(URL);
             if (cookies != null)
                 r.CookieContainer = cookies;
             if (headers != null)
-                r.Headers = headers;
+                foreach (var h in headers.AllKeys)
+                {
+                    try
+                    {
+                        r.Headers.Add(h, headers[h]);
+                    }
+                    catch 
+                    {
+                        try
+                        {
+                            var info = typeof(HttpWebRequest).GetProperty(h.Replace("-", ""));
+                            info.SetValue(r, headers[h], null);
+                        }
+                        catch{}
+                    }
+                }
             r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
+            r.Method = Method.ToString().ToUpper();
+            if (Method == RequestMethod.POST && !String.IsNullOrEmpty(Post))
+            {
+                Stream stream = r.GetRequestStream();
+                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+                stream.Dispose();
+            }
             if (enc!=null)
                 return new StreamReader(((HttpWebResponse) r.GetResponse()).GetResponseStream(),enc).ReadToEnd();
             else
@@ -74,13 +103,29 @@ namespace EpicMorg.Net
         {
             return DownloadData(URL, gcc(cookies), headers);
         }
-        public static byte[] DownloadData(string URL,CookieContainer cookies,WebHeaderCollection headers)
+        public static byte[] DownloadData(string URL, CookieContainer cookies, WebHeaderCollection headers, RequestMethod Method = RequestMethod.GET, string Post = null)
         {
             HttpWebRequest r = (HttpWebRequest) WebRequest.Create(URL);
             if (cookies != null)
                 r.CookieContainer = cookies;
             if (headers != null)
-                r.Headers = headers;
+                foreach (var h in headers.AllKeys)
+                {
+                    try
+                    {
+                        r.Headers.Add(h, headers[h]);
+                    }
+                    catch { }
+                }
+            r.Method = Method.ToString().ToUpper();
+            if (Method == RequestMethod.POST && !String.IsNullOrEmpty(Post))
+            {
+                Stream stream = r.GetRequestStream();
+                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+                stream.Dispose();
+            }
             r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
             return _downloaddata(r);
         }
@@ -112,13 +157,29 @@ namespace EpicMorg.Net
         {
             DownloadFile(URL, gcc(cookies), headers, FileName, prealloc);
         }
-        public static void DownloadFile(string URL, CookieContainer cookies, WebHeaderCollection headers, string FileName, bool prealloc)
+        public static void DownloadFile(string URL, CookieContainer cookies, WebHeaderCollection headers, string FileName, bool prealloc,RequestMethod Method = RequestMethod.GET, string Post = null)
         {
             HttpWebRequest r = (HttpWebRequest) WebRequest.Create(URL);
             if (cookies != null)
                 r.CookieContainer = cookies;
             if (headers != null)
-                r.Headers = headers;
+                foreach (var h in headers.AllKeys)
+                {
+                    try
+                    {
+                        r.Headers.Add(h, headers[h]);
+                    }
+                    catch { }
+                }
+            r.Method = Method.ToString().ToUpper();
+            if (Method == RequestMethod.POST && !String.IsNullOrEmpty(Post))
+            {
+                Stream stream = r.GetRequestStream();
+                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
+                stream.Write(data, 0, data.Length);
+                stream.Close();
+                stream.Dispose();
+            }
             r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
             _downloadstream(r, new FileStream(FileName, FileMode.Create, FileAccess.Write), prealloc);
         }
@@ -126,7 +187,7 @@ namespace EpicMorg.Net
         #region Egine
         private static void _downloadstream(HttpWebRequest httpWebRequest, Stream write,bool prealloc)
         {
-            var resp = httpWebRequest.GetResponse();
+                var resp = httpWebRequest.GetResponse();
             Stream read = resp.GetResponseStream();
             long length = resp.ContentLength, startlength = write.Length, ready = 0;
             int buflength = 65536, count = 0;
