@@ -16,7 +16,7 @@ namespace EpicMorg.Net
         #region User Functions
         public static string DownloadString(string URL)
         {
-            return DownloadString(URL, null, null, null);
+             return DownloadString(URL, null, null, null);
         }
         public static string DownloadString(string URL, Encoding enc)
         {
@@ -78,10 +78,13 @@ namespace EpicMorg.Net
                 stream.Close();
                 stream.Dispose();
             }
+            r.Timeout = 5000;
+            var rst = ((HttpWebResponse) r.GetResponse()).GetResponseStream();
+            rst.ReadTimeout = 5000;
             if (enc!=null)
-                return new StreamReader(((HttpWebResponse) r.GetResponse()).GetResponseStream(),enc).ReadToEnd();
+                return new StreamReader(rst,enc).ReadToEnd();
             else
-                return new StreamReader(((HttpWebResponse) r.GetResponse()).GetResponseStream()).ReadToEnd();
+                return new StreamReader(rst).ReadToEnd();
         }
         public static byte[] DownloadData(string URL)
         {
@@ -187,6 +190,7 @@ namespace EpicMorg.Net
         #region Egine
         private static void _downloadstream(HttpWebRequest httpWebRequest, Stream write,bool prealloc)
         {
+            
                 var resp = httpWebRequest.GetResponse();
             Stream read = resp.GetResponseStream();
             long length = resp.ContentLength, startlength = write.Length, ready = 0;
@@ -206,8 +210,10 @@ namespace EpicMorg.Net
         private static byte[] _downloaddata(HttpWebRequest httpWebRequest)
         {
 
-            Stream read = httpWebRequest.GetResponse().GetResponseStream();
-            long length = read.Length, ready = 0;
+            httpWebRequest.Timeout = 5000;
+            var resp=httpWebRequest.GetResponse();
+            Stream read = resp.GetResponseStream();
+            long length = resp.ContentLength, ready = 0;
             byte[] output = new byte[0];
             int buflength = 65536, count = 0;
             byte[] buf = new byte[buflength];
