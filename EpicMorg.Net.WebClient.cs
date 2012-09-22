@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.IO;
 using System.Linq;
@@ -187,16 +187,24 @@ namespace EpicMorg.Net
             _downloadstream(r, new FileStream(FileName, FileMode.Create, FileAccess.Write), prealloc);
         }
         #endregion
-        #region Egine
+        #region Engine
         private static void _downloadstream(HttpWebRequest httpWebRequest, Stream write,bool prealloc)
         {
             
-                var resp = httpWebRequest.GetResponse();
+            var resp = httpWebRequest.GetResponse();
             Stream read = resp.GetResponseStream();
-            long length = resp.ContentLength, startlength = write.Length, ready = 0;
+            long length = 0, startlength = write.Length, ready = 0;
             int buflength = 65536, count = 0;
+    		try
+			{
+				length=resp.ContentLength
+			}catch
+			{
+			 prealloc=false;
+			}
             if (prealloc)
-                write.SetLength(write.Length + length);
+                write.SetLength(startlength + length);
+			//set to expected size	
             byte[] buf = new byte[buflength];
             while ((count = read.Read(buf, 0, buflength)) != 0)
             {
