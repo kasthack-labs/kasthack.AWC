@@ -69,6 +69,8 @@ namespace EpicMorg.Net
                     }
                 }
             r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
+            if (r.UserAgent == null)
+                r.UserAgent= "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
             r.Method = Method.ToString().ToUpper();
             if (Method == RequestMethod.POST && !String.IsNullOrEmpty(Post))
             {
@@ -184,27 +186,29 @@ namespace EpicMorg.Net
                 stream.Dispose();
             }
             r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
-            _downloadstream(r, new FileStream(FileName, FileMode.Create, FileAccess.Write), prealloc);
+            Stream s = null;
+            try
+            {
+                s = new FileStream(FileName, FileMode.Create, FileAccess.Write);
+                _downloadstream(r, s, prealloc);
+            }
+            finally
+            {
+                try { s.Close(); }
+                catch { }
+            }
         }
         #endregion
-        #region Engine
+        #region Egine
         private static void _downloadstream(HttpWebRequest httpWebRequest, Stream write,bool prealloc)
         {
             
-            var resp = httpWebRequest.GetResponse();
+                var resp = httpWebRequest.GetResponse();
             Stream read = resp.GetResponseStream();
-            long length = 0, startlength = write.Length, ready = 0;
+            long length = resp.ContentLength, startlength = write.Length, ready = 0;
             int buflength = 65536, count = 0;
-    		try
-			{
-				length=resp.ContentLength
-			}catch
-			{
-			 prealloc=false;
-			}
             if (prealloc)
-                write.SetLength(startlength + length);
-			//set to expected size	
+                write.SetLength(write.Length + length);
             byte[] buf = new byte[buflength];
             while ((count = read.Read(buf, 0, buflength)) != 0)
             {
