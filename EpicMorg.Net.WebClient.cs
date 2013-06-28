@@ -36,34 +36,7 @@ namespace EpicMorg.Net {
             return DownloadString(URL, Encoding.GetEncoding(enc), gcc(cookies), null);
         }
         public static string DownloadString( string URL, Encoding enc, CookieContainer cookies, WebHeaderCollection headers, RequestMethod Method = RequestMethod.GET, string Post = null, int Timeout = 5000 ) {
-            HttpWebRequest r = (HttpWebRequest)WebRequest.Create(URL);
-            if ( cookies != null )
-                r.CookieContainer = cookies;
-            if ( headers != null )
-                foreach ( var h in headers.AllKeys ) {
-                    try {
-                        r.Headers.Add(h, headers[h]);
-                    }
-                    catch {
-                        try {
-                            var info = typeof(HttpWebRequest).GetProperty(h.Replace("-", ""));
-                            info.SetValue(r, headers[h], null);
-                        }
-                        catch { }
-                    }
-                }
-            r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
-            if ( r.UserAgent == null )
-                r.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
-            r.Method = Method.ToString().ToUpper();
-            if ( Method == RequestMethod.POST && !String.IsNullOrEmpty(Post) ) {
-                Stream stream = r.GetRequestStream();
-                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-                stream.Dispose();
-            }
-            r.Timeout = Timeout;
+			HttpWebRequest r = PrepareRequest( URL, cookies, headers, Method, Post, Timeout );
             var rst = ( (HttpWebResponse)r.GetResponse() ).GetResponseStream();
             rst.ReadTimeout = Timeout;
             if ( enc != null )
@@ -87,25 +60,7 @@ namespace EpicMorg.Net {
             return DownloadData(URL, gcc(cookies), headers);
         }
         public static byte[] DownloadData( string URL, CookieContainer cookies, WebHeaderCollection headers, RequestMethod Method = RequestMethod.GET, string Post = null ) {
-            HttpWebRequest r = (HttpWebRequest)WebRequest.Create(URL);
-            if ( cookies != null )
-                r.CookieContainer = cookies;
-            if ( headers != null )
-                foreach ( var h in headers.AllKeys ) {
-                    try {
-                        r.Headers.Add(h, headers[h]);
-                    }
-                    catch { }
-                }
-            r.Method = Method.ToString().ToUpper();
-            if ( Method == RequestMethod.POST && !String.IsNullOrEmpty(Post) ) {
-                Stream stream = r.GetRequestStream();
-                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-                stream.Dispose();
-            }
-            r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
+			HttpWebRequest r = PrepareRequest( URL, cookies, headers, Method, Post );
             return _downloaddata(r);
         }
         public static void DownloadFile( string URL, string FileName ) {
@@ -129,26 +84,8 @@ namespace EpicMorg.Net {
         public static void DownloadFile( string URL, CookieCollection cookies, WebHeaderCollection headers, string FileName, bool prealloc ) {
             DownloadFile(URL, gcc(cookies), headers, FileName, prealloc);
         }
-        public static void DownloadFile( string URL, CookieContainer cookies, WebHeaderCollection headers, string FileName, bool prealloc, RequestMethod Method = RequestMethod.GET, string Post = null ) {
-            HttpWebRequest r = (HttpWebRequest)WebRequest.Create(URL);
-            if ( cookies != null )
-                r.CookieContainer = cookies;
-            if ( headers != null )
-                foreach ( var h in headers.AllKeys ) {
-                    try {
-                        r.Headers.Add(h, headers[h]);
-                    }
-                    catch { }
-                }
-            r.Method = Method.ToString().ToUpper();
-            if ( Method == RequestMethod.POST && !String.IsNullOrEmpty(Post) ) {
-                Stream stream = r.GetRequestStream();
-                byte[] data = new System.Text.UTF8Encoding().GetBytes(Post);
-                stream.Write(data, 0, data.Length);
-                stream.Close();
-                stream.Dispose();
-            }
-            r.Headers.Add(HttpRequestHeader.AcceptEncoding, "none");
+		public static void DownloadFile( string URL, CookieContainer cookies, WebHeaderCollection headers, string FileName, bool prealloc, RequestMethod Method = RequestMethod.GET, string Post = null, int Timeout = 5000 ) {
+			HttpWebRequest r = PrepareRequest( URL, cookies, headers, Method, Post,Timeout );
             Stream s = null;
             try {
                 s = new FileStream(FileName, FileMode.Create, FileAccess.Write);
@@ -159,6 +96,29 @@ namespace EpicMorg.Net {
                 catch { }
             }
         }
+		private static HttpWebRequest PrepareRequest( string URL, CookieContainer cookies, WebHeaderCollection headers, RequestMethod Method = RequestMethod.GET, string Post = null, int Timeout = 5000 ) {
+			HttpWebRequest r = ( HttpWebRequest ) WebRequest.Create( URL );
+			r.Timeout = Timeout;
+			if ( cookies != null )
+				r.CookieContainer = cookies;
+			if ( headers != null )
+				foreach ( var h in headers.AllKeys ) {
+					try {
+						r.Headers.Add( h, headers[ h ] );
+					}
+					catch { }
+				}
+			r.Method = Method.ToString().ToUpper();
+			r.Headers.Add( HttpRequestHeader.AcceptEncoding, "none" );
+			if ( Method == RequestMethod.POST && !String.IsNullOrEmpty( Post ) ) {
+				Stream stream = r.GetRequestStream();
+				byte[] data = new System.Text.UTF8Encoding().GetBytes( Post );
+				stream.Write( data, 0, data.Length );
+				stream.Close();
+				stream.Dispose();
+			}
+			return r;
+		}
         #endregion
         #region Egine
         private static void _downloadstream( HttpWebRequest httpWebRequest, Stream write, bool prealloc, int Timeout = 5000 ) {
