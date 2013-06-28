@@ -109,6 +109,8 @@ namespace EpicMorg.Net {
 					catch { }
 				}
 			r.Method = Method.ToString().ToUpper();
+			if ( r.UserAgent == null )
+                r.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
 			r.Headers.Add( HttpRequestHeader.AcceptEncoding, "none" );
 			if ( Method == RequestMethod.POST && !String.IsNullOrEmpty( Post ) ) {
 				Stream stream = r.GetRequestStream();
