@@ -113,6 +113,7 @@ namespace EpicMorg.Net {
                 r.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
 			r.Headers.Add( HttpRequestHeader.AcceptEncoding, "none" );
 			if ( Method == RequestMethod.POST && !String.IsNullOrEmpty( Post ) ) {
+				r.ContentType = "application/x-www-form-urlencoded";
 				Stream stream = r.GetRequestStream();
 				byte[] data = new System.Text.UTF8Encoding().GetBytes( Post );
 				stream.Write( data, 0, data.Length );
@@ -124,7 +125,6 @@ namespace EpicMorg.Net {
         #endregion
         #region Egine
         private static void _downloadstream( HttpWebRequest httpWebRequest, Stream write, bool prealloc, int Timeout = 5000 ) {
-
             var resp = httpWebRequest.GetResponse();
             Stream read = resp.GetResponseStream();
             read.ReadTimeout = Timeout;
@@ -142,15 +142,18 @@ namespace EpicMorg.Net {
             read.Close();
         }
         private static byte[] _downloaddata( HttpWebRequest httpWebRequest, int Timeout = 5000 ) {
-
-            httpWebRequest.Timeout = Timeout;
-            var resp = httpWebRequest.GetResponse();
-            Stream read = resp.GetResponseStream();
-            read.ReadTimeout = Timeout;
-            long length = resp.ContentLength, ready = 0;
-            byte[] output = new byte[0];
+			WebResponse resp;
+			Stream read;
+			long length, ready = 0;
+			byte[] output = new byte[ 0 ];
             int buflength = 65536, count = 0;
             byte[] buf = new byte[buflength];
+
+			httpWebRequest.Timeout = Timeout;
+            resp = httpWebRequest.GetResponse();
+            read = resp.GetResponseStream();
+            read.ReadTimeout = Timeout;
+            length = resp.ContentLength;
             while ( ( count = read.Read(buf, 0, buflength) ) != 0 ) {
                 ready += count;
                 output = output.Concat(buf.Take(count)).ToArray();
