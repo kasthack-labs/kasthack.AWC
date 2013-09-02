@@ -14,47 +14,31 @@ namespace EpicMorg.Net {
 		}
 		#region User Functions
 		#region Synchronous
-		public static string DownloadString( string url, int enc, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return DownloadString( url, Encoding.GetEncoding(enc), _gcc( cookies ), headers, method, post, timeout );}
-		public static string DownloadString( string url, Encoding enc = null, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return DownloadString( url, enc, _gcc( cookies ), headers, method, post, timeout );}
+		public static string DownloadString( string url, int enc, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
+			return DownloadString( url, Encoding.GetEncoding(enc), cookies , headers, method, post, timeout );}
 		public static string DownloadString( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
 			var rst = _processRequest( url, cookies, headers, method, post, timeout).GetResponseStream();
 			rst.ReadTimeout = timeout;
 			return ( enc == null ? new StreamReader( rst ) : new StreamReader( rst, enc ) ).ReadToEnd();
 		}
 
-		public static byte[] DownloadData( string url, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return DownloadData( url, headers == null ? null : _gcc( cookies ), headers, method, post );}
 		public static byte[] DownloadData( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
 			return _downloadData( _processRequest( url, cookies, headers, method, post,timeout ) );}
 		
-		public static void DownloadFile( string url, string fileName, bool prealloc, WebHeaderCollection headers, CookieCollection cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			DownloadFile( url, fileName, prealloc, headers, cookies == null ? ( CookieContainer ) null : _gcc( cookies ), method, post, timeout );
-		}
 		public static void DownloadFile( string url, string fileName, bool prealloc, WebHeaderCollection headers, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
 			Stream s = null;
 			try { _downloadStream( _processRequest( url, cookies, headers, method, post, timeout ), ( s = new FileStream( fileName, FileMode.Create, FileAccess.Write ) ), prealloc, timeout ); }
 			finally { try { s.Close(); } catch { } } }
 		#endregion
 		#region Asynchronous
-		public static async Task<string> DownloadStringAsync( string url, int enc, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return await DownloadStringAsync( url, Encoding.GetEncoding( enc ), _gcc( cookies ), headers, method, post, timeout );}
-		public static async Task<string> DownloadStringAsync( string url, Encoding enc = null, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return await DownloadStringAsync( url, enc, _gcc( cookies ), headers, method, post, timeout );}
 		public static async Task<string> DownloadStringAsync( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ){
 			var rst = (await _processRequestAsync(url, cookies, headers, method, post, timeout)).GetResponseStream();
 			rst.ReadTimeout = timeout;
 			return await ( enc == null ? new StreamReader( rst ) : new StreamReader( rst, enc ) ).ReadToEndAsync();}
 
-		public static async Task<byte[]> DownloadDataAsync( string url, CookieCollection cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			return await DownloadDataAsync( url, headers == null ? null : _gcc( cookies ), headers, method, post );}
 		public static async Task<byte[]> DownloadDataAsync( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
 			return await _downloadDataAsync(await _processRequestAsync( url, cookies, headers, method, post, timeout ) );}
 		
-		public static async void DownloadFileAsync( string url, string fileName, bool prealloc, WebHeaderCollection headers, CookieCollection cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-			await DownloadFileAsync( url, fileName, prealloc, headers, cookies == null ? ( CookieContainer ) null : _gcc( cookies ), method, post, timeout );
-		}
 		public static async Task DownloadFileAsync( string url, string fileName, bool prealloc, WebHeaderCollection headers, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
 			Stream s = null;
 			try { await _downloadStreamAsync(await _processRequestAsync( url, cookies, headers, method, post, timeout ), ( s = new FileStream( fileName, FileMode.Create, FileAccess.Write ) ), prealloc, timeout ); }
@@ -62,7 +46,7 @@ namespace EpicMorg.Net {
 		}
 		#endregion
 		#endregion
-		#region Egine
+		#region Engine
 		private static WebResponse _processRequest( string url, CookieContainer cookies=null, WebHeaderCollection headers=null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ){
 			var r = _prepareRequest(url, cookies, headers, method, post, timeout);
 			if ( method == RequestMethod.POST && !String.IsNullOrEmpty( post ) ) {
@@ -158,7 +142,7 @@ namespace EpicMorg.Net {
 			read.Close();
 			return buffer.SelectMany( a => a ).ToArray();
 		}
-		private static CookieContainer _gcc( CookieCollection cookies ) {
+		public static CookieContainer CCollectoion2Container( CookieCollection cookies ) {
 			var c = new CookieContainer();
 			c.Add( cookies );
 			return c;
