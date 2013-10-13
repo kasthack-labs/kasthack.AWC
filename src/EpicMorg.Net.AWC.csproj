@@ -8,8 +8,8 @@
     <ProjectGuid>{37E5F64A-3C87-4536-A1EE-697953F9F0A3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>EpicMorg.Net.AdvancedDownloadManager</RootNamespace>
-    <AssemblyName>EpicMorg.Net.AdvancedDownloadManager</AssemblyName>
+    <RootNamespace>EpicMorg.Net.AWC</RootNamespace>
+    <AssemblyName>EpicMorg.Net.AWC</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
@@ -37,14 +37,10 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EpicMorg.Net.WebClient.cs" />
+    <Compile Include="AWC.Net.WebClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
