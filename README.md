@@ -4,10 +4,10 @@ AdvancedWebClient
 Simple Http library.
 Features:
 
-*File downloading
+* File downloading
   * Synchronous/Async
   * Space preallocation
 
-*String downloading
+* String downloading
   * Synchronous/Async
   * Manual encoding conf
