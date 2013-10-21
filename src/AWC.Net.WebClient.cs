@@ -25,7 +25,7 @@ namespace EpicMorg.Net {
         }
 
         public static void DownloadFile( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            SyncTask(DownloadFileAsync(url, fileName, prealloc, headers, cookies, method, post, timeout));
+            VSyncTask(DownloadFileAsync(url, fileName, prealloc, headers, cookies, method, post, timeout));
         }
         #endregion
         #region Asynchronous
@@ -110,13 +110,16 @@ namespace EpicMorg.Net {
             return c;
         }
         private static T SyncTask<T>( Task<T> task ) {
-            task.Start();
-            task.Wait();
+            VSyncTask(task);
             return task.Result;
         }
-        private static void SyncTask( Task task ) {
-            task.Start();
-            task.Wait();
+        private static void VSyncTask( Task task ) {
+            //not started
+            if ( task.Status == TaskStatus.Created )
+                task.Start();
+            //not finished
+            if ( task.Status != TaskStatus.Canceled && task.Status != TaskStatus.Faulted && task.Status != TaskStatus.RanToCompletion )
+                task.Wait();
         }
 
         #endregion
