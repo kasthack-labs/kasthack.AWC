@@ -18,14 +18,14 @@ namespace EpicMorg.Net {
             return DownloadString( url, Encoding.GetEncoding( enc ), cookies, headers, method, post, timeout );
         }
         public static string DownloadString( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return SyncTask(DownloadStringAsync(url, enc, cookies, headers, method, post, timeout));
+            return Helper.SyncTask(DownloadStringAsync(url, enc, cookies, headers, method, post, timeout));
         }
         public static byte[] DownloadData( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return SyncTask( DownloadDataAsync( url, cookies, headers, method, post, timeout ) );
+            return Helper.SyncTask( DownloadDataAsync( url, cookies, headers, method, post, timeout ) );
         }
 
         public static void DownloadFile( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            VSyncTask(DownloadFileAsync(url, fileName, prealloc, headers, cookies, method, post, timeout));
+            Helper.VSyncTask(DownloadFileAsync(url, fileName, prealloc, headers, cookies, method, post, timeout));
         }
         #endregion
         #region Asynchronous
@@ -104,16 +104,28 @@ namespace EpicMorg.Net {
             read.Close();
             return buffer.SelectMany( a => a ).ToArray();
         }
+        
+        #endregion
+    }
+    public static class Helper {
         public static CookieContainer CCollectoion2Container( CookieCollection cookies ) {
             var c = new CookieContainer();
             c.Add( cookies );
             return c;
         }
-        private static T SyncTask<T>( Task<T> task ) {
-            VSyncTask(task);
+        /// <summary>
+        /// Wait for async task and return execution result
+        /// </summary>
+        /// <param name="task"></param>
+        public static T SyncTask<T>( Task<T> task ) {
+            VSyncTask( task );
             return task.Result;
         }
-        private static void VSyncTask( Task task ) {
+        /// <summary>
+        /// Wait for async task
+        /// </summary>
+        /// <param name="task"></param>
+        public static void VSyncTask( Task task ) {
             //not started
             if ( task.Status == TaskStatus.Created )
                 task.Start();
@@ -121,7 +133,5 @@ namespace EpicMorg.Net {
             if ( task.Status != TaskStatus.Canceled && task.Status != TaskStatus.Faulted && task.Status != TaskStatus.RanToCompletion )
                 task.Wait();
         }
-
-        #endregion
     }
 }
