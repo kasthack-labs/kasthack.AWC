@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Net;
 using System.IO;
 using System.Linq;
+using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Security.Cryptography.X509Certificates;
 namespace EpicMorg.Net {
     public static class AWC {
         public enum RequestMethod {
@@ -14,44 +15,53 @@ namespace EpicMorg.Net {
         }
         #region User Functions
         #region Synchronous
-        public static string DownloadString( string url, int enc, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return DownloadString( url, Encoding.GetEncoding( enc ), cookies, headers, method, post, timeout );
+        public static string DownloadString( string url, int enc, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            return DownloadString( url, Encoding.GetEncoding( enc ), cookies, headers, method, post, timeout, enableCompression );
         }
-        public static string DownloadString( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return Helper.SyncTask(DownloadStringAsync(url, enc, cookies, headers, method, post, timeout));
+        public static string DownloadString( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            return Helper.SyncTask( DownloadStringAsync( url, enc, cookies, headers, method, post, timeout, enableCompression ) );
         }
-        public static byte[] DownloadData( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return Helper.SyncTask( DownloadDataAsync( url, cookies, headers, method, post, timeout ) );
+        public static byte[] DownloadData( string url, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            return Helper.SyncTask( DownloadDataAsync( url, cookies, headers, method, post, timeout, enableCompression ) );
         }
 
-        public static void DownloadFile( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            Helper.VSyncTask(DownloadFileAsync(url, fileName, prealloc, headers, cookies, method, post, timeout));
+        public static void DownloadFile( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = false ) {
+            Helper.VSyncTask( DownloadFileAsync( url, fileName, prealloc, headers, cookies, method, post, timeout, enableCompression ) );
         }
         #endregion
         #region Asynchronous
-        public static async Task<string> DownloadStringAsync( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            using ( var rst = ( await _processRequestAsync( url, cookies, headers, method, post, timeout ) ).GetResponseStream() ) {
-                rst.ReadTimeout = timeout;
-                using ( var br = new BufferedStream(rst) )
-                    using ( var sr = enc == null ? new StreamReader(br) : new StreamReader(br, enc) )
-                        return await ( sr ).ReadToEndAsync();
+        public static async Task<string> DownloadStringAsync( string url, Encoding enc = null, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            using ( var rst = ( await _processRequestAsync( url, cookies, headers, method, post, timeout, enableCompression ) ).GetResponseStream() ) {
+                if (rst.CanTimeout)
+                    rst.ReadTimeout = timeout;
+                using ( var br = new BufferedStream( rst ) )
+                using ( var sr = enc == null ? new StreamReader( br ) : new StreamReader( br, enc ) )
+                    return await ( sr ).ReadToEndAsync();
             }
         }
 
-        public static async Task<byte[]> DownloadDataAsync( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            return await _downloadDataAsync( await _processRequestAsync( url, cookies, headers, method, post, timeout ) );
+        public static async Task<byte[]> DownloadDataAsync( string url, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            return await _downloadDataAsync( await _processRequestAsync( url, cookies, headers, method, post, timeout, enableCompression ) );
         }
 
-        public static async Task DownloadFileAsync( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
+        public static async Task DownloadFileAsync( string url, string fileName, bool prealloc = true, WebHeaderCollection headers = null, CookieContainer cookies = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = false ) {
             Stream s = null;
-            try { await _downloadStreamAsync( await _processRequestAsync( url, cookies, headers, method, post, timeout ), ( s = new FileStream( fileName, FileMode.Create, FileAccess.Write ) ), prealloc, timeout ); }
+            try { await _downloadStreamAsync( await _processRequestAsync( url, cookies, headers, method, post, timeout, enableCompression ), ( s = new FileStream( fileName, FileMode.Create, FileAccess.Write ) ), prealloc, timeout ); }
             finally { try { s.Close(); } catch { } }
         }
         #endregion
         #endregion
         #region Engine
-        private static async Task<WebResponse> _processRequestAsync( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000 ) {
-            var r = _prepareRequest( url, cookies, headers, method, timeout );
+        private static async Task<WebResponse> _processRequestAsync( string url, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, string post = null, int timeout = 5000, bool enableCompression = true ) {
+            var r = _prepareRequest( url, cookies, headers, method, timeout, enableCompression );
             if ( method != RequestMethod.POST || String.IsNullOrEmpty( post ) ) return ( await r.GetResponseAsync() );
             r.ContentType = "application/x-www-form-urlencoded";
             var stream = await r.GetRequestStreamAsync();
@@ -62,35 +72,44 @@ namespace EpicMorg.Net {
             stream.Dispose();
             return ( await r.GetResponseAsync() );
         }
-        private static HttpWebRequest _prepareRequest( string url, CookieContainer cookies = null, WebHeaderCollection headers = null, RequestMethod method = RequestMethod.GET, int timeout = 5000 ) {
+        private static HttpWebRequest _prepareRequest( string url, CookieContainer cookies = null, WebHeaderCollection headers = null,
+            RequestMethod method = RequestMethod.GET, int timeout = 5000, bool enableCompression = true ) {
             var r = WebRequest.CreateHttp( url );
             r.Timeout = timeout;
-            if ( cookies != null ) r.CookieContainer = cookies;
-            if ( headers != null ) foreach ( var h in headers.AllKeys ) try { r.Headers.Add( h, headers[ h ] ); }
+            if ( cookies != null )
+                r.CookieContainer = cookies;
+            if ( headers != null )
+                foreach ( var h in headers.AllKeys )
+                    try { r.Headers.Add( h, headers[ h ] ); }
                     catch { }
             r.Method = method.ToString().ToUpper();
-            if ( r.UserAgent == null ) r.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
-            r.Headers.Add( HttpRequestHeader.AcceptEncoding, "none" );
+            r.AutomaticDecompression = enableCompression?
+                DecompressionMethods.Deflate | DecompressionMethods.GZip:
+                DecompressionMethods.None;
+            if ( r.UserAgent == null )
+                r.UserAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.4 (KHTML, like Gecko)";
             return r;
         }
-        private static async Task _downloadStreamAsync( WebResponse resp, Stream write, bool prealloc, int timeout = 5000 ) {
+        private static async Task _downloadStreamAsync( WebResponse resp, Stream write, bool prealloc, int timeout = 5000) {
             const int buflength = 65536;
             var buf = new byte[ buflength ];
-            int count;
             long length = resp.ContentLength, startlength = write.Length, ready = 0, curwlen = startlength;
-            var read = resp.GetResponseStream();
-            read.ReadTimeout = timeout;
-            if ( prealloc && length > 0 )
-                write.SetLength( write.Length + length );
-            while ( ( count = await read.ReadAsync( buf, 0, buflength ) ) != 0 ) {
-                ready += count;
-                await write.WriteAsync( buf, 0, count );
-                if ( length < 0 && startlength + ready + buflength > ( curwlen = write.Length ) )
-                    write.SetLength( curwlen + buflength * 16 ); //reduce fragmentation for files with no content-length specified
+            using ( var read = resp.GetResponseStream() ) {
+                if (read.CanTimeout)
+                    read.ReadTimeout = timeout;
+                if ( prealloc && length > 0 )
+                    write.SetLength( write.Length + length );
+                int count;
+                while ( ( count = await read.ReadAsync( buf, 0, buflength ) ) != 0 ) {
+                    ready += count;
+                    await write.WriteAsync( buf, 0, count );
+                    if ( length < 0 && startlength + ready + buflength > ( curwlen = write.Length ) )
+                        write.SetLength( curwlen + buflength << 8 );
+                    //reduce fragmentation for files with no content-length specified
+                }
+                if ( prealloc ) write.SetLength( startlength + ready );
+                await read.FlushAsync();
             }
-            if ( prealloc ) write.SetLength( startlength + ready );
-            await read.FlushAsync();
-            read.Close();
         }
         private static async Task<byte[]> _downloadDataAsync( WebResponse resp, int timeout = 5000 ) {
             var buffer = new List<byte[]>();
@@ -98,16 +117,40 @@ namespace EpicMorg.Net {
             int count;
             var buf = new byte[ buflength ];
             var read = resp.GetResponseStream();
-            read.ReadTimeout = timeout;
+            if (read.CanTimeout)
+                read.ReadTimeout = timeout;
             while ( ( count = await read.ReadAsync( buf, 0, buflength ) ) != 0 )
                 buffer.Add( buf.Take( count ).ToArray() );
             read.Close();
             return buffer.SelectMany( a => a ).ToArray();
         }
-        
+
         #endregion
     }
     public static class Helper {
+        //copypasta: http://msdn.microsoft.com/en-us/library/bb408523(v=exchg.140).aspx
+        public static bool SSLValidatorCallback(
+         object sender,
+         X509Certificate certificate,
+         X509Chain chain,
+         SslPolicyErrors sslPolicyErrors ) {
+            // If the certificate is a valid, signed certificate, return true.
+            if ( sslPolicyErrors == SslPolicyErrors.None ) return true;
+            // If there are errors in the certificate chain, look at each error to determine the cause.
+            if ( ( sslPolicyErrors & SslPolicyErrors.RemoteCertificateChainErrors ) == 0 )
+                return false;
+            if ( chain == null || chain.ChainStatus == null ) return true;
+            // When processing reaches this line, the only errors in the certificate chain are
+            // untrusted root errors for self-signed certificates. These certificates are valid
+            // for default Exchange Server installations, so return true.
+            // In all other cases, return false.
+            return chain.ChainStatus.Where( status => certificate.Subject != certificate.Issuer || ( status.Status != X509ChainStatusFlags.UntrustedRoot ) ).All( status => status.Status == X509ChainStatusFlags.NoError );
+        }
+        /// <summary>
+        /// Convert CookieCollection to CookieContainer
+        /// </summary>
+        /// <param name="cookies"></param>
+        /// <returns></returns>
         public static CookieContainer CCollectoion2Container( CookieCollection cookies ) {
             var c = new CookieContainer();
             c.Add( cookies );

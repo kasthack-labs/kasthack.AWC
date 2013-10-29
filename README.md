@@ -11,3 +11,7 @@ Features:
 * String downloading
   * Synchronous/Async
   * Manual encoding conf
+  
+* HTTP Requests
+  * Cookies
+  * GZip
