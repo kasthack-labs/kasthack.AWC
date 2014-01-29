@@ -76,6 +76,7 @@ namespace EpicMorg.Net {
             RequestMethod method = RequestMethod.GET, int timeout = 5000, bool enableCompression = true ) {
             var r = WebRequest.CreateHttp( url );
             r.Timeout = timeout;
+            r.KeepAlive = false;//fuck keep-alive
             if ( cookies != null )
                 r.CookieContainer = cookies;
             if ( headers != null )
@@ -92,20 +93,23 @@ namespace EpicMorg.Net {
         }
         private static async Task _downloadStreamAsync( WebResponse resp, Stream write, bool prealloc, int timeout = 5000) {
             const int buflength = 65536;
+            const int grow = buflength * 128;
+            //reduce fragmentation for files with no content-length specified
             var buf = new byte[ buflength ];
-            long length = resp.ContentLength, startlength = write.Length, ready = 0, curwlen = startlength;
+            var length = resp.ContentLength;
+            var startlength = write.Length;
+            var ready = 0L;
+            var curwlen = startlength;
+            
             using ( var read = resp.GetResponseStream() ) {
-                if (read.CanTimeout)
-                    read.ReadTimeout = timeout;
-                if ( prealloc && length > 0 )
-                    write.SetLength( write.Length + length );
+                if (read.CanTimeout) read.ReadTimeout = timeout;
+                if ( prealloc && length > 0 ) write.SetLength( write.Length + length );
                 int count;
                 while ( ( count = await read.ReadAsync( buf, 0, buflength ) ) != 0 ) {
                     ready += count;
+                    if ( length == 0 && startlength + ready + buflength > ( curwlen = write.Length ) )
+                        write.SetLength( curwlen + grow);
                     await write.WriteAsync( buf, 0, count );
-                    if ( length < 0 && startlength + ready + buflength > ( curwlen = write.Length ) )
-                        write.SetLength( curwlen + buflength << 8 );
-                    //reduce fragmentation for files with no content-length specified
                 }
                 if ( prealloc ) write.SetLength( startlength + ready );
                 await read.FlushAsync();
