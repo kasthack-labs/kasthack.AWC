@@ -103,11 +103,11 @@ namespace EpicMorg.Net {
             
             using ( var read = resp.GetResponseStream() ) {
                 if (read.CanTimeout) read.ReadTimeout = timeout;
-                if ( prealloc && length > 0 ) write.SetLength( write.Length + length );
+                if ( prealloc && length > 0L ) write.SetLength( write.Length + length );
                 int count;
                 while ( ( count = await read.ReadAsync( buf, 0, buflength ) ) != 0 ) {
                     ready += count;
-                    if ( length == 0 && startlength + ready + buflength > ( curwlen = write.Length ) )
+                    if ( length <= 0L && startlength + ready + buflength > ( curwlen = write.Length ) )
                         write.SetLength( curwlen + grow);
                     await write.WriteAsync( buf, 0, count );
                 }
