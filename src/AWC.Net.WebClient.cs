@@ -9,6 +9,14 @@ using System.Threading.Tasks;
 using System.Security.Cryptography.X509Certificates;
 namespace EpicMorg.Net {
     public static class AWC {
+        private static object _locker = false;
+        static AWC() {
+            lock ( _locker ) {
+                if (!(bool)_locker) ServicePointManager.DefaultConnectionLimit = Math.Max( ServicePointManager.DefaultConnectionLimit, 20 );
+                _locker = true;
+            }
+        }
+
         public enum RequestMethod {
             Get,
             Post
